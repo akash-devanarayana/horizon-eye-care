@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horizon · Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Mono:wght@400;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-field: #0a1620;
+    --border: #1c2f3f;
+    --text-main: #e8f1f7;
+    --text-soft: #93aebf;
+    --text-faint: #5b7385;
+    --accent-glow: #5fb4d8;
+    --accent-deep: #2d6a8a;
+    --radius: 14px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #11202d 0%, #0d1925 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 60px -20px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: rise 0.6s var(--ease) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+    opacity: 0.7;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    -webkit-app-region: drag;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .brand-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: var(--text-soft);
+    text-transform: uppercase;
+  }
+
+  .close {
+    -webkit-app-region: no-drag;
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s var(--ease);
+  }
+  .close:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+
+  .body { padding: 32px 36px 36px; }
+
+  .heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .subheading {
+    color: var(--text-faint);
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .stat-card {
+    background: var(--bg-field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    animation: rise 0.6s var(--ease) both;
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+  .stat-card.accent {
+    border-color: rgba(95, 180, 216, 0.2);
+    background: linear-gradient(135deg, rgba(45, 106, 138, 0.15), var(--bg-field));
+  }
+
+  .stat-icon {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-card.accent .stat-value {
+    color: var(--accent-glow);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">Horizon</span>
+      </div>
+      <button class="close" id="closeBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="body">
+      <h1 class="heading">Stats</h1>
+      <p class="subheading">Your eye care progress.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="stat-icon">&#127775;</div>
+          <div class="stat-value" id="streak">0</div>
+          <div class="stat-label">Day streak</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">&#9989;</div>
+          <div class="stat-value" id="todayCompleted">0</div>
+          <div class="stat-label">Today completed</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">&#9193;</div>
+          <div class="stat-value" id="todaySkipped">0</div>
+          <div class="stat-label">Today skipped</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">&#127942;</div>
+          <div class="stat-value" id="totalCompleted">0</div>
+          <div class="stat-label">All-time breaks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.horizon.getStats().then(stats => {
+      document.getElementById('streak').textContent = stats.streak;
+      document.getElementById('todayCompleted').textContent = stats.todayCompleted;
+      document.getElementById('todaySkipped').textContent = stats.todaySkipped;
+      document.getElementById('totalCompleted').textContent = stats.totalCompleted;
+    });
+
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      window.horizon.closeStats();
+    });
+  </script>
+</body>
+</html>

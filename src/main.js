@@ -4,6 +4,7 @@ const fs = require('fs');
 
 let overlay = null;
 let settingsWin = null;
+let statsWin = null;
 let tray = null;
 let workTimer = null;
 let breakTimer = null;
@@ -25,6 +26,58 @@ function loadSettings() {
 
 function saveSettings(settings) {
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+}
+
+const STATS_PATH = path.join(app.getPath('userData'), 'stats.json');
+
+function loadStats() {
+  try {
+    return JSON.parse(fs.readFileSync(STATS_PATH, 'utf8'));
+  } catch {
+    return { days: {}, totalCompleted: 0, totalSkipped: 0 };
+  }
+}
+
+function saveStats(stats) {
+  fs.writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2));
+}
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function recordBreak(type) {
+  const stats = loadStats();
+  const key = todayKey();
+  if (!stats.days[key]) stats.days[key] = { completed: 0, skipped: 0 };
+  if (type === 'completed') {
+    stats.days[key].completed++;
+    stats.totalCompleted = (stats.totalCompleted || 0) + 1;
+  } else {
+    stats.days[key].skipped++;
+    stats.totalSkipped = (stats.totalSkipped || 0) + 1;
+  }
+  saveStats(stats);
+}
+
+function getStreak() {
+  const stats = loadStats();
+  const dates = Object.keys(stats.days).filter(d => stats.days[d].completed > 0).sort().reverse();
+  if (dates.length === 0) return 0;
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < 365; i++) {
+    const check = new Date(today);
+    check.setDate(check.getDate() - i);
+    const key = check.toISOString().slice(0, 10);
+    if (stats.days[key] && stats.days[key].completed > 0) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+  return streak;
 }
 
 function getWorkDuration() {
@@ -95,9 +148,10 @@ function playSound(file) {
   }
 }
 
-function endBreak() {
+function endBreak(skipped) {
   clearTimeout(breakTimer);
   breakTimer = null;
+  recordBreak(skipped ? 'skipped' : 'completed');
   playSound('break-end.wav');
   setTimeout(() => {
     if (overlay) overlay.close();
@@ -148,6 +202,10 @@ function updateTrayMenu() {
       label: 'Settings',
       click: openSettings,
     },
+    {
+      label: 'Stats',
+      click: openStats,
+    },
     { type: 'separator' },
     {
       label: 'Quit',
@@ -185,7 +243,7 @@ function openSettings() {
   settingsWin.on('closed', () => { settingsWin = null; });
 }
 
-ipcMain.on('skip-break', endBreak);
+ipcMain.on('skip-break', () => endBreak(true));
 
 ipcMain.handle('get-settings', () => loadSettings());
 
@@ -200,6 +258,44 @@ ipcMain.on('save-settings', (_e, settings) => {
 
 ipcMain.on('close-settings', () => {
   if (settingsWin) settingsWin.close();
+});
+
+function openStats() {
+  if (statsWin) {
+    statsWin.focus();
+    return;
+  }
+  statsWin = new BrowserWindow({
+    width: 480,
+    height: 520,
+    resizable: false,
+    frame: false,
+    transparent: true,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+  statsWin.setMenu(null);
+  statsWin.loadFile(path.join(__dirname, 'stats.html'));
+  statsWin.on('closed', () => { statsWin = null; });
+}
+
+ipcMain.handle('get-stats', () => {
+  const stats = loadStats();
+  const key = todayKey();
+  const today = stats.days[key] || { completed: 0, skipped: 0 };
+  return {
+    todayCompleted: today.completed,
+    todaySkipped: today.skipped,
+    totalCompleted: stats.totalCompleted || 0,
+    streak: getStreak(),
+  };
+});
+
+ipcMain.on('close-stats', () => {
+  if (statsWin) statsWin.close();
 });
 
 app.whenReady().then(() => {

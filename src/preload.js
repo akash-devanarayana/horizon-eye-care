@@ -5,4 +5,6 @@ contextBridge.exposeInMainWorld('horizon', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.send('save-settings', settings),
   closeSettings: () => ipcRenderer.send('close-settings'),
+  getStats: () => ipcRenderer.invoke('get-stats'),
+  closeStats: () => ipcRenderer.send('close-stats'),
 });
