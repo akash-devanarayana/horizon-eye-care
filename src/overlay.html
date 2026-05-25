@@ -87,18 +87,21 @@
   <div class="hint">Rest your eyes — focus on something far away</div>
 
   <script>
-    let remaining = 20;
-    const el = document.getElementById('countdown');
-
-    const timer = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(timer);
-        el.textContent = '0';
-        return;
-      }
+    window.horizon.getSettings().then(settings => {
+      let remaining = settings.breakSeconds;
+      const el = document.getElementById('countdown');
       el.textContent = remaining;
-    }, 1000);
+
+      const timer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(timer);
+          el.textContent = '0';
+          return;
+        }
+        el.textContent = remaining;
+      }, 1000);
+    });
   </script>
 </body>
 </html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horizon · Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Mono:wght@400;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a141d;
+    --bg-panel: #0f1c28;
+    --bg-field: #0a1620;
+    --bg-field-focus: #0c1b27;
+    --border: #1c2f3f;
+    --border-focus: #3a7a9e;
+    --text-main: #e8f1f7;
+    --text-soft: #93aebf;
+    --text-faint: #5b7385;
+    --accent: #4a9cc4;
+    --accent-glow: #5fb4d8;
+    --accent-deep: #2d6a8a;
+    --radius: 14px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.18), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.12), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.10), transparent),
+      radial-gradient(1px 1px at 85% 20%, rgba(255,255,255,0.14), transparent);
+    pointer-events: none;
+  }
+
+  .panel {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    background: linear-gradient(180deg, #11202d 0%, #0d1925 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 60px -20px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: rise 0.6s var(--ease) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+    opacity: 0.7;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    -webkit-app-region: drag;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .brand-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: var(--text-soft);
+    text-transform: uppercase;
+  }
+
+  .close {
+    -webkit-app-region: no-drag;
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s var(--ease);
+  }
+  .close:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+
+  .body { padding: 32px 36px 36px; }
+
+  .heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .subheading {
+    color: var(--text-faint);
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+
+  .field { margin-bottom: 22px; animation: rise 0.6s var(--ease) both; }
+  .field:nth-child(2) { animation-delay: 0.08s; }
+  .field:nth-child(3) { animation-delay: 0.14s; }
+
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .field-label svg { width: 14px; height: 14px; opacity: 0.7; }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s var(--ease);
+  }
+  .input-wrap:focus-within {
+    border-color: var(--border-focus);
+    background: var(--bg-field-focus);
+    box-shadow: 0 0 0 4px rgba(74,156,196,0.12);
+  }
+
+  .input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 16px 18px;
+    width: 100%;
+  }
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .input-wrap input[type=number] { -moz-appearance: textfield; }
+
+  .unit {
+    font-size: 13px;
+    color: var(--text-faint);
+    padding: 6px 14px;
+    margin-right: 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 26px 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    flex: 1;
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), box-shadow 0.25s var(--ease), background 0.2s var(--ease);
+  }
+  .btn:active { transform: translateY(1px) scale(0.99); }
+
+  .btn-save {
+    color: #04161f;
+    background: linear-gradient(135deg, var(--accent-glow), var(--accent-deep));
+    box-shadow: 0 8px 20px -6px rgba(74,156,196,0.5);
+  }
+  .btn-save:hover {
+    box-shadow: 0 10px 26px -6px rgba(95,180,216,0.65);
+    filter: brightness(1.05);
+  }
+
+  .btn-cancel {
+    flex: 0 0 36%;
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid var(--border);
+  }
+  .btn-cancel:hover { background: rgba(255,255,255,0.04); color: var(--text-main); }
+
+  .saved-flash {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(10,20,29,0.7);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    color: var(--accent-glow);
+  }
+  .saved-flash.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="titlebar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">Horizon</span>
+      </div>
+      <button class="close" id="closeBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="body">
+      <h1 class="heading">Settings</h1>
+      <p class="subheading">Tune your focus rhythm.</p>
+
+      <div class="field">
+        <label class="field-label" for="workMinutes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Work Interval
+        </label>
+        <div class="input-wrap">
+          <input type="number" id="workMinutes" value="20" min="1" max="120">
+          <span class="unit">minutes</span>
+        </div>
+        <p class="hint">How long you stay focused before a break.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="breakSeconds">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11h12v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M16 11h2a2 2 0 0 1 0 4h-2"/><path d="M7 4v2M11 4v2"/></svg>
+          Break Duration
+        </label>
+        <div class="input-wrap">
+          <input type="number" id="breakSeconds" value="20" min="5" max="300">
+          <span class="unit">seconds</span>
+        </div>
+        <p class="hint">A short rest to reset your eyes and mind.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="actions">
+        <button class="btn btn-cancel" id="cancelBtn">Cancel</button>
+        <button class="btn btn-save" id="saveBtn">Save Settings</button>
+      </div>
+    </div>
+
+    <div class="saved-flash" id="flash">&#10003; Saved</div>
+  </div>
+
+  <script>
+    window.horizon.getSettings().then(settings => {
+      document.getElementById('workMinutes').value = settings.workMinutes;
+      document.getElementById('breakSeconds').value = settings.breakSeconds;
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const workMinutes = parseInt(document.getElementById('workMinutes').value, 10) || 20;
+      const breakSeconds = parseInt(document.getElementById('breakSeconds').value, 10) || 20;
+
+      const flash = document.getElementById('flash');
+      flash.classList.add('show');
+
+      window.horizon.saveSettings({ workMinutes, breakSeconds });
+      setTimeout(() => flash.classList.remove('show'), 1100);
+    });
+
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      window.horizon.closeSettings();
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      window.horizon.closeSettings();
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 const { app, BrowserWindow, Tray, Menu, screen, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 let overlay = null;
+let settingsWin = null;
 let tray = null;
 let workTimer = null;
 let breakTimer = null;
@@ -10,8 +12,28 @@ let paused = false;
 let workStartedAt = null;
 let onBreak = false;
 
-const WORK_DURATION = 20 * 60 * 1000;
-const BREAK_DURATION = 20 * 1000;
+const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20 };
+
+function loadSettings() {
+  try {
+    return { ...DEFAULTS, ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')) };
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+
+function saveSettings(settings) {
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+}
+
+function getWorkDuration() {
+  return loadSettings().workMinutes * 60 * 1000;
+}
+
+function getBreakDuration() {
+  return loadSettings().breakSeconds * 1000;
+}
 
 function createOverlay() {
   const { width, height } = screen.getPrimaryDisplay().bounds;
@@ -52,7 +74,7 @@ function updateTooltip() {
     tray.setToolTip('Horizon — On break');
   } else if (workStartedAt) {
     const elapsed = Date.now() - workStartedAt;
-    const remaining = WORK_DURATION - elapsed;
+    const remaining = getWorkDuration() - elapsed;
     tray.setToolTip(`Horizon — Next break in ${formatTime(remaining)}`);
   }
 }
@@ -79,7 +101,7 @@ function startBreak() {
   updateTooltip();
   createOverlay();
 
-  breakTimer = setTimeout(endBreak, BREAK_DURATION);
+  breakTimer = setTimeout(endBreak, getBreakDuration());
 }
 
 function startWorkTimer() {
@@ -88,7 +110,7 @@ function startWorkTimer() {
   updateTooltip();
   workTimer = setTimeout(() => {
     startBreak();
-  }, WORK_DURATION);
+  }, getWorkDuration());
 }
 
 function togglePause() {
@@ -111,6 +133,10 @@ function updateTrayMenu() {
       label: paused ? 'Resume' : 'Pause',
       click: togglePause,
     },
+    {
+      label: 'Settings',
+      click: openSettings,
+    },
     { type: 'separator' },
     {
       label: 'Quit',
@@ -126,7 +152,44 @@ function createTray() {
   updateTrayMenu();
 }
 
+function openSettings() {
+  if (settingsWin) {
+    settingsWin.focus();
+    return;
+  }
+  settingsWin = new BrowserWindow({
+    width: 540,
+    height: 660,
+    resizable: false,
+    frame: false,
+    transparent: true,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+  settingsWin.setMenu(null);
+  settingsWin.loadFile(path.join(__dirname, 'settings.html'));
+  settingsWin.on('closed', () => { settingsWin = null; });
+}
+
 ipcMain.on('skip-break', endBreak);
+
+ipcMain.handle('get-settings', () => loadSettings());
+
+ipcMain.on('save-settings', (_e, settings) => {
+  saveSettings(settings);
+  if (settingsWin) settingsWin.close();
+  if (!paused && !onBreak) {
+    clearTimeout(workTimer);
+    startWorkTimer();
+  }
+});
+
+ipcMain.on('close-settings', () => {
+  if (settingsWin) settingsWin.close();
+});
 
 app.whenReady().then(() => {
   createTray();
