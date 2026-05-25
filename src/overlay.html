@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon Break</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      user-select: none;
+      cursor: default;
+      overflow: hidden;
+    }
+
+    .emoji {
+      font-size: 72px;
+      margin-bottom: 24px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .message {
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      margin-bottom: 48px;
+    }
+
+    .countdown {
+      font-size: 96px;
+      font-weight: 200;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.9;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 48px;
+      font-size: 16px;
+      opacity: 0.4;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="emoji">🌅</div>
+  <div class="message">Look at the horizon</div>
+  <div class="countdown" id="countdown">20</div>
+  <div class="hint">Rest your eyes — focus on something far away</div>
+
+  <script>
+    let remaining = 20;
+    const el = document.getElementById('countdown');
+
+    const timer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(timer);
+        el.textContent = '0';
+        return;
+      }
+      el.textContent = remaining;
+    }, 1000);
+  </script>
+</body>
+</html>

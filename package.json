@@ -1,0 +1,31 @@
+{
+  "name": "horizon",
+  "version": "1.0.0",
+  "description": "20-20-20 rule break reminder",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^26.0.0"
+  },
+  "author": "Horizon",
+  "build": {
+    "appId": "com.horizon.eyecare",
+    "productName": "Horizon",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    }
+  }
+}
