@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, screen } = require('electron');
+const { app, BrowserWindow, Tray, Menu, screen, ipcMain } = require('electron');
 const path = require('path');
 
 let overlay = null;
@@ -29,6 +29,7 @@ function createOverlay() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -62,19 +63,23 @@ function startTooltipUpdates() {
   updateTooltip();
 }
 
+function endBreak() {
+  clearTimeout(breakTimer);
+  breakTimer = null;
+  if (overlay) {
+    overlay.close();
+  }
+  onBreak = false;
+  startWorkTimer();
+}
+
 function startBreak() {
   onBreak = true;
   workStartedAt = null;
   updateTooltip();
   createOverlay();
 
-  breakTimer = setTimeout(() => {
-    if (overlay) {
-      overlay.close();
-    }
-    onBreak = false;
-    startWorkTimer();
-  }, BREAK_DURATION);
+  breakTimer = setTimeout(endBreak, BREAK_DURATION);
 }
 
 function startWorkTimer() {
@@ -120,6 +125,8 @@ function createTray() {
   tray.setToolTip('Horizon — 20-20-20 reminder');
   updateTrayMenu();
 }
+
+ipcMain.on('skip-break', endBreak);
 
 app.whenReady().then(() => {
   createTray();
