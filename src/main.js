@@ -13,7 +13,7 @@ let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20 };
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true };
 
 function loadSettings() {
   try {
@@ -85,14 +85,25 @@ function startTooltipUpdates() {
   updateTooltip();
 }
 
+function playSound(file) {
+  const settings = loadSettings();
+  if (!settings.soundEnabled) return;
+  const soundPath = path.join(__dirname, '..', 'assets', 'sounds', file).replace(/\\/g, '/');
+  const win = overlay || settingsWin;
+  if (win && !win.isDestroyed()) {
+    win.webContents.executeJavaScript(`new Audio('file:///${soundPath}').play().catch(()=>{})`);
+  }
+}
+
 function endBreak() {
   clearTimeout(breakTimer);
   breakTimer = null;
-  if (overlay) {
-    overlay.close();
-  }
-  onBreak = false;
-  startWorkTimer();
+  playSound('break-end.wav');
+  setTimeout(() => {
+    if (overlay) overlay.close();
+    onBreak = false;
+    startWorkTimer();
+  }, 600);
 }
 
 function startBreak() {
@@ -159,7 +170,7 @@ function openSettings() {
   }
   settingsWin = new BrowserWindow({
     width: 540,
-    height: 660,
+    height: 720,
     resizable: false,
     frame: false,
     transparent: true,

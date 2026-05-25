@@ -209,6 +209,72 @@
     color: var(--text-faint);
   }
 
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    animation: rise 0.6s var(--ease) both;
+    animation-delay: 0.2s;
+  }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    font-weight: 600;
+  }
+  .toggle-label svg { width: 14px; height: 14px; opacity: 0.7; }
+
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+  }
+
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.25s var(--ease);
+  }
+
+  .toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    background: var(--text-faint);
+    border-radius: 50%;
+    transition: all 0.25s var(--ease);
+  }
+
+  .toggle input:checked + .toggle-track {
+    background: var(--accent-deep);
+    border-color: var(--accent);
+  }
+
+  .toggle input:checked + .toggle-track::after {
+    left: 23px;
+    background: var(--accent-glow);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
   .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--border), transparent);
@@ -306,6 +372,17 @@
         <p class="hint">A short rest to reset your eyes and mind.</p>
       </div>
 
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Sound
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="soundEnabled" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
       <div class="divider"></div>
 
       <div class="actions">
@@ -321,16 +398,18 @@
     window.horizon.getSettings().then(settings => {
       document.getElementById('workMinutes').value = settings.workMinutes;
       document.getElementById('breakSeconds').value = settings.breakSeconds;
+      document.getElementById('soundEnabled').checked = settings.soundEnabled !== false;
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
       const workMinutes = parseInt(document.getElementById('workMinutes').value, 10) || 20;
       const breakSeconds = parseInt(document.getElementById('breakSeconds').value, 10) || 20;
+      const soundEnabled = document.getElementById('soundEnabled').checked;
 
       const flash = document.getElementById('flash');
       flash.classList.add('show');
 
-      window.horizon.saveSettings({ workMinutes, breakSeconds });
+      window.horizon.saveSettings({ workMinutes, breakSeconds, soundEnabled });
       setTimeout(() => flash.classList.remove('show'), 1100);
     });
 

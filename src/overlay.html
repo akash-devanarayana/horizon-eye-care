@@ -88,6 +88,10 @@
 
   <script>
     window.horizon.getSettings().then(settings => {
+      if (settings.soundEnabled) {
+        new Audio('../assets/sounds/break-start.wav').play().catch(() => {});
+      }
+
       let remaining = settings.breakSeconds;
       const el = document.getElementById('countdown');
       el.textContent = remaining;
