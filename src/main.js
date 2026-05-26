@@ -1,10 +1,17 @@
-const { app, BrowserWindow, Tray, Menu, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, screen, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+
+const REPO = 'akash-devanarayana/horizon-eye-care';
+const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
 
 let overlay = null;
 let settingsWin = null;
 let statsWin = null;
+let updateWin = null;
+let updateToastTimer = null;
+let pendingUpdate = null;
 let tray = null;
 let workTimer = null;
 let breakTimer = null;
@@ -337,6 +344,134 @@ function togglePause() {
   updateTrayMenu();
 }
 
+// --- Update check (lightweight: query GitHub Releases, notify if newer) ---
+function compareVersions(a, b) {
+  const pa = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
+  const pb = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+function fetchLatestRelease() {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      `https://api.github.com/repos/${REPO}/releases/latest`,
+      { headers: { 'User-Agent': 'Horizon-App', Accept: 'application/vnd.github+json' } },
+      res => {
+        if (res.statusCode !== 200) {
+          res.resume();
+          reject(new Error('HTTP ' + res.statusCode));
+          return;
+        }
+        let data = '';
+        res.on('data', c => (data += c));
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            resolve({ tag: json.tag_name, url: json.html_url });
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }
+    );
+    req.on('error', reject);
+    req.setTimeout(10000, () => req.destroy(new Error('timeout')));
+  });
+}
+
+async function checkForUpdates(manual) {
+  try {
+    const { tag, url } = await fetchLatestRelease();
+    if (!tag) throw new Error('no tag');
+    const current = app.getVersion();
+    const latest = tag.replace(/^v/, '');
+    const releaseUrl = url || RELEASES_PAGE;
+
+    if (compareVersions(tag, current) > 0) {
+      if (manual) {
+        const { response } = await dialog.showMessageBox({
+          type: 'info',
+          title: 'Update available',
+          message: `Horizon ${latest} is available.`,
+          detail: `You have ${current}. Download the new version?`,
+          buttons: ['Download', 'Later'],
+          defaultId: 0,
+          cancelId: 1,
+        });
+        if (response === 0) shell.openExternal(releaseUrl);
+      } else {
+        showUpdateToast(latest, releaseUrl);
+      }
+    } else if (manual) {
+      await dialog.showMessageBox({
+        type: 'info',
+        title: 'Horizon',
+        message: 'You’re up to date.',
+        detail: `Horizon ${current} is the latest version.`,
+        buttons: ['OK'],
+      });
+    }
+  } catch (e) {
+    if (manual) {
+      await dialog.showMessageBox({
+        type: 'warning',
+        title: 'Horizon',
+        message: 'Couldn’t check for updates.',
+        detail: 'Please check your connection and try again later.',
+        buttons: ['OK'],
+      });
+    }
+  }
+}
+
+function showUpdateToast(version, url) {
+  pendingUpdate = { version, url };
+  if (updateWin) {
+    updateWin.show();
+    return;
+  }
+  const W = 340;
+  const H = 168;
+  const { workArea } = screen.getPrimaryDisplay();
+  updateWin = new BrowserWindow({
+    width: W,
+    height: H,
+    x: workArea.x + workArea.width - W - 16,
+    y: workArea.y + workArea.height - H - 16,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    focusable: true,
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+  updateWin.setMenu(null);
+  updateWin.loadFile(path.join(__dirname, 'update-toast.html'));
+  updateWin.once('ready-to-show', () => updateWin.showInactive());
+  updateWin.on('closed', () => {
+    updateWin = null;
+    clearTimeout(updateToastTimer);
+  });
+  // Auto-dismiss after a while if untouched.
+  clearTimeout(updateToastTimer);
+  updateToastTimer = setTimeout(() => {
+    if (updateWin) updateWin.close();
+  }, 20000);
+}
+
 function updateTrayMenu() {
   if (!tray) return;
   const menu = Menu.buildFromTemplate([
@@ -351,6 +486,10 @@ function updateTrayMenu() {
     {
       label: 'Stats',
       click: openStats,
+    },
+    {
+      label: 'Check for Updates…',
+      click: () => checkForUpdates(true),
     },
     { type: 'separator' },
     {
@@ -447,11 +586,26 @@ ipcMain.on('close-stats', () => {
   if (statsWin) statsWin.close();
 });
 
+ipcMain.handle('get-update-info', () => pendingUpdate);
+
+ipcMain.on('update-download', () => {
+  if (pendingUpdate) shell.openExternal(pendingUpdate.url);
+  if (updateWin) updateWin.close();
+});
+
+ipcMain.on('update-dismiss', () => {
+  if (updateWin) updateWin.close();
+});
+
 app.whenReady().then(() => {
+  // Required for Windows toast notifications to attribute correctly.
+  app.setAppUserModelId('com.horizon.eyecare');
   createTray();
   startWorkTimer();
   startTooltipUpdates();
   startDndMonitor();
+  // Check for updates shortly after launch (silent unless one is found).
+  setTimeout(() => checkForUpdates(false), 5000);
 });
 
 app.on('window-all-closed', (e) => {

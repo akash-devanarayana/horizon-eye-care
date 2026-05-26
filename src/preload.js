@@ -7,4 +7,7 @@ contextBridge.exposeInMainWorld('horizon', {
   closeSettings: () => ipcRenderer.send('close-settings'),
   getStats: () => ipcRenderer.invoke('get-stats'),
   closeStats: () => ipcRenderer.send('close-stats'),
+  getUpdateInfo: () => ipcRenderer.invoke('get-update-info'),
+  downloadUpdate: () => ipcRenderer.send('update-download'),
+  dismissUpdate: () => ipcRenderer.send('update-dismiss'),
 });
