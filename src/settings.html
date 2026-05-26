@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Horizon · Settings</title>
+<link rel="stylesheet" href="fonts.css">
 <style>
   :root {
     --paper: #f4f0e8;
@@ -14,7 +15,7 @@
     --gold-deep: #c4ab3f;
     --line: rgba(10, 10, 10, 0.14);
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -63,7 +64,7 @@
 
   .brand {
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.01em;
   }
   .brand .dot { color: var(--gold-deep); }
@@ -96,7 +97,7 @@
   }
   .head h1 {
     font-size: 46px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 0.98;
     letter-spacing: -0.03em;
   }
@@ -122,7 +123,7 @@
   }
   .sec-letter {
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--gold-deep);
   }
   .sec-title {
@@ -156,7 +157,7 @@
     color: var(--ink);
     font-family: var(--sans);
     font-size: 52px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.03em;
     outline: none;
     -moz-appearance: textfield;
@@ -213,7 +214,7 @@
   }
   .toggle .state {
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.14em;
     color: var(--muted);
     width: 30px;
@@ -249,7 +250,7 @@
     color: var(--paper);
     font-family: var(--sans);
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     padding: 20px;
@@ -345,6 +346,27 @@
           </div>
         </div>
       </div>
+
+      <!-- E: Daily goal -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-letter">E</span>
+          <span class="sec-title">Daily goal</span>
+          <span class="sec-desc">Breaks to aim for each day.</span>
+        </div>
+        <div class="value-row">
+          <div class="value">
+            <input type="number" id="dailyGoal" min="1" max="100" value="14">
+            <span class="unit">BREAKS</span>
+          </div>
+          <div class="chips" id="goalChips">
+            <button class="chip" data-v="8">8</button>
+            <button class="chip" data-v="12">12</button>
+            <button class="chip" data-v="16">16</button>
+            <button class="chip" data-v="20">20</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <button class="save" id="saveBtn">Save &amp; Resume &rarr;</button>
@@ -353,6 +375,7 @@
   <script>
     const workInput = document.getElementById('workMinutes');
     const breakInput = document.getElementById('breakSeconds');
+    const goalInput = document.getElementById('dailyGoal');
     const soundToggle = document.getElementById('soundToggle');
     const dndToggle = document.getElementById('dndToggle');
 
@@ -383,22 +406,26 @@
 
     wireChips('workChips', workInput);
     wireChips('breakChips', breakInput);
+    wireChips('goalChips', goalInput);
 
     window.horizon.getSettings().then(settings => {
       workInput.value = settings.workMinutes;
       breakInput.value = settings.breakSeconds;
+      goalInput.value = settings.dailyGoal || 14;
       setToggle(soundToggle, settings.soundEnabled !== false);
       setToggle(dndToggle, settings.dndEnabled !== false);
       syncChips('workChips', workInput);
       syncChips('breakChips', breakInput);
+      syncChips('goalChips', goalInput);
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
       const workMinutes = parseInt(workInput.value, 10) || 20;
       const breakSeconds = parseInt(breakInput.value, 10) || 20;
+      const dailyGoal = parseInt(goalInput.value, 10) || 14;
       const soundEnabled = soundToggle.classList.contains('on');
       const dndEnabled = dndToggle.classList.contains('on');
-      window.horizon.saveSettings({ workMinutes, breakSeconds, soundEnabled, dndEnabled });
+      window.horizon.saveSettings({ workMinutes, breakSeconds, dailyGoal, soundEnabled, dndEnabled });
     });
 
     document.getElementById('closeBtn').addEventListener('click', () => {

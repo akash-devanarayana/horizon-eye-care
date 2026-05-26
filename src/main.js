@@ -17,7 +17,7 @@ let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true };
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14 };
 
 // --- Do Not Disturb: detect fullscreen apps via the Windows notification-state API ---
 let queryNotificationState = null;
@@ -41,9 +41,14 @@ function isFullscreenAppRunning() {
   return state === 2 || state === 3 || state === 4 || state === 7;
 }
 
+function readJson(file) {
+  // Strip a leading UTF-8 BOM, which JSON.parse cannot handle.
+  return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^﻿/, ''));
+}
+
 function loadSettings() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')) };
+    return { ...DEFAULTS, ...readJson(SETTINGS_PATH) };
   } catch {
     return { ...DEFAULTS };
   }
@@ -57,7 +62,7 @@ const STATS_PATH = path.join(app.getPath('userData'), 'stats.json');
 
 function loadStats() {
   try {
-    return JSON.parse(fs.readFileSync(STATS_PATH, 'utf8'));
+    return readJson(STATS_PATH);
   } catch {
     return { days: {}, totalCompleted: 0, totalSkipped: 0 };
   }
@@ -67,8 +72,16 @@ function saveStats(stats) {
   fs.writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2));
 }
 
+function dateKey(d) {
+  // Local YYYY-MM-DD (avoids the UTC shift from toISOString in non-UTC zones)
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return dateKey(new Date());
 }
 
 function recordBreak(type) {
@@ -95,7 +108,7 @@ function getStreak() {
   for (let i = 0; i < 365; i++) {
     const check = new Date(today);
     check.setDate(check.getDate() - i);
-    const key = check.toISOString().slice(0, 10);
+    const key = dateKey(check);
     if (stats.days[key] && stats.days[key].completed > 0) {
       streak++;
     } else if (i > 0) {
@@ -103,6 +116,42 @@ function getStreak() {
     }
   }
   return streak;
+}
+
+function getLongestStreak() {
+  const stats = loadStats();
+  const days = Object.keys(stats.days).filter(d => stats.days[d].completed > 0).sort();
+  if (days.length === 0) return 0;
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const cur = new Date(days[i]);
+    const diffDays = Math.round((cur - prev) / 86400000);
+    run = diffDays === 1 ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return best;
+}
+
+function getLast7Days() {
+  const stats = loadStats();
+  const result = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = dateKey(d);
+    const day = stats.days[key];
+    result.push({
+      label: labels[d.getDay()],
+      completed: day ? day.completed : 0,
+      isToday: i === 0,
+    });
+  }
+  return result;
 }
 
 function getWorkDuration() {
@@ -325,7 +374,7 @@ function openSettings() {
   }
   settingsWin = new BrowserWindow({
     width: 560,
-    height: 760,
+    height: 880,
     resizable: false,
     frame: false,
     transparent: true,
@@ -363,8 +412,8 @@ function openStats() {
     return;
   }
   statsWin = new BrowserWindow({
-    width: 480,
-    height: 520,
+    width: 600,
+    height: 660,
     resizable: false,
     frame: false,
     transparent: true,
@@ -388,6 +437,9 @@ ipcMain.handle('get-stats', () => {
     todaySkipped: today.skipped,
     totalCompleted: stats.totalCompleted || 0,
     streak: getStreak(),
+    longestStreak: getLongestStreak(),
+    last7: getLast7Days(),
+    dailyGoal: loadSettings().dailyGoal || 14,
   };
 });
 

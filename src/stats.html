@@ -4,227 +4,306 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Horizon · Stats</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Mono:wght@400;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts.css">
 <style>
   :root {
-    --bg-field: #0a1620;
-    --border: #1c2f3f;
-    --text-main: #e8f1f7;
-    --text-soft: #93aebf;
-    --text-faint: #5b7385;
-    --accent-glow: #5fb4d8;
-    --accent-deep: #2d6a8a;
-    --radius: 14px;
+    --paper: #f4f0e8;
+    --paper-2: #ece7db;
+    --ink: #0a0a0a;
+    --muted: #8a857c;
+    --muted-2: #5a554c;
+    --gold: #d9c25a;
+    --gold-deep: #c4ab3f;
+    --line: rgba(10, 10, 10, 0.14);
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  html, body {
-    overflow: hidden;
-    height: 100%;
-  }
-
+  html, body { height: 100%; overflow: hidden; background: transparent; }
   body {
-    font-family: 'Sora', sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background: transparent;
-    color: var(--text-main);
+    font-family: var(--sans);
+    color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
 
-  .panel {
+  .card {
     position: relative;
-    width: 100%;
     height: 100%;
-    background: linear-gradient(180deg, #11202d 0%, #0d1925 100%);
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.04) inset,
-      0 30px 60px -20px rgba(0,0,0,0.6);
+    background: var(--paper);
+    border-radius: 4px;
     overflow: hidden;
-    animation: rise 0.6s var(--ease) both;
+    display: flex;
+    flex-direction: column;
+    animation: rise 0.5s var(--ease) both;
   }
-
   @keyframes rise {
-    from { opacity: 0; transform: translateY(16px) scale(0.99); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
-  .panel::before {
+  .card::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
-    opacity: 0.7;
+    height: 3px;
+    background: var(--gold);
   }
 
-  .titlebar {
+  .topbar {
+    -webkit-app-region: drag;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(255,255,255,0.015);
-    -webkit-app-region: drag;
+    padding: 22px 32px 0;
   }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .brand-dot {
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: var(--accent-glow);
-    box-shadow: 0 0 10px var(--accent-glow);
-  }
-
-  .brand-name {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.22em;
-    color: var(--text-soft);
-    text-transform: uppercase;
-  }
-
+  .brand { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand .dot { color: var(--gold-deep); }
   .close {
     -webkit-app-region: no-drag;
-    width: 28px; height: 28px;
-    border: none;
+    width: 26px; height: 26px;
+    border: 1px solid var(--line);
     background: transparent;
-    color: var(--text-faint);
-    border-radius: 8px;
+    color: var(--ink);
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1;
     display: grid;
     place-items: center;
-    transition: all 0.2s var(--ease);
+    transition: all 0.15s var(--ease);
   }
-  .close:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+  .close:hover { background: var(--ink); color: var(--paper); }
 
-  .body { padding: 32px 36px 36px; }
-
-  .heading {
-    font-family: 'Fraunces', serif;
-    font-weight: 500;
-    font-size: 34px;
-    letter-spacing: -0.01em;
-    margin-bottom: 4px;
-  }
-  .subheading {
-    color: var(--text-faint);
-    font-size: 14px;
-    margin-bottom: 30px;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-
-  .stat-card {
-    background: var(--bg-field);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    animation: rise 0.6s var(--ease) both;
-  }
-  .stat-card:nth-child(1) { animation-delay: 0.05s; }
-  .stat-card:nth-child(2) { animation-delay: 0.1s; }
-  .stat-card:nth-child(3) { animation-delay: 0.15s; }
-  .stat-card:nth-child(4) { animation-delay: 0.2s; }
-
-  .stat-card.accent {
-    border-color: rgba(95, 180, 216, 0.2);
-    background: linear-gradient(135deg, rgba(45, 106, 138, 0.15), var(--bg-field));
-  }
-
-  .stat-icon {
-    font-size: 20px;
-    margin-bottom: 10px;
-  }
-
-  .stat-value {
-    font-family: 'Space Mono', monospace;
-    font-size: 36px;
+  .head { padding: 16px 32px 18px; }
+  .head h1 {
+    font-size: 42px;
     font-weight: 700;
-    color: var(--text-main);
-    line-height: 1;
-    margin-bottom: 6px;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+  .head h1 .accent { color: var(--gold-deep); }
+  .head .sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
   }
 
-  .stat-card.accent .stat-value {
-    color: var(--accent-glow);
-  }
+  .body { flex: 1; padding: 0 32px; overflow: hidden; }
 
-  .stat-label {
-    font-size: 11px;
-    letter-spacing: 0.12em;
+  .streak-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .streak-now { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+  .streak-best { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; }
+  .streak-best b { color: var(--gold-deep); }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin: 18px 0;
+  }
+  .stat {
+    padding: 4px 18px;
+    border-left: 1px solid var(--line);
+  }
+  .stat:first-child { padding-left: 0; border-left: none; }
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--muted);
     text-transform: uppercase;
-    color: var(--text-faint);
-    font-weight: 600;
   }
+  .stat .num {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin: 6px 0 2px;
+  }
+  .stat .lbl { font-size: 12.5px; color: var(--muted-2); font-weight: 600; }
+  .stat .meta { font-size: 11px; color: var(--gold-deep); font-weight: 700; margin-top: 4px; }
+
+  /* chart */
+  .figure { padding-top: 6px; }
+  .fig-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .fig-title { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
+  .fig-goal { font-size: 11px; font-weight: 700; color: var(--muted-2); }
+  .fig-goal b { color: var(--ink); }
+
+  .chart {
+    position: relative;
+    height: 132px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .goal-line {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px dashed var(--gold-deep);
+    z-index: 2;
+  }
+  .goal-tag {
+    position: absolute;
+    right: 0;
+    transform: translateY(-100%);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold-deep);
+    background: var(--paper);
+    padding: 0 4px;
+  }
+  .bar {
+    position: relative;
+    flex: 1;
+    max-width: 44px;
+    background: var(--ink);
+    border-radius: 3px 3px 0 0;
+    min-height: 3px;
+    transition: height 0.6s var(--ease);
+  }
+  .bar.today { background: var(--gold); }
+  .bar-val {
+    position: absolute;
+    top: -19px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted-2);
+  }
+  .bar.today .bar-val { color: var(--gold-deep); }
+  .days {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 9px;
+  }
+  .day {
+    flex: 1;
+    max-width: 44px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .day.today { color: var(--ink); }
 </style>
 </head>
 <body>
-  <div class="panel">
-    <div class="titlebar">
-      <div class="brand">
-        <span class="brand-dot"></span>
-        <span class="brand-name">Horizon</span>
-      </div>
+  <div class="card">
+    <div class="topbar">
+      <div class="brand">Horizon<span class="dot">.</span></div>
       <button class="close" id="closeBtn" aria-label="Close">&times;</button>
     </div>
 
+    <div class="head">
+      <h1>Eye care,<br><span class="accent">the numbers.</span></h1>
+      <div class="sub">Your rhythm this week.</div>
+    </div>
+
     <div class="body">
-      <h1 class="heading">Stats</h1>
-      <p class="subheading">Your eye care progress.</p>
+      <div class="streak-row">
+        <div class="streak-now" id="streakNow">Start your streak today.</div>
+        <div class="streak-best" id="streakBest">Personal best · <b>—</b></div>
+      </div>
 
-      <div class="stats-grid">
-        <div class="stat-card accent">
-          <div class="stat-icon">&#127775;</div>
-          <div class="stat-value" id="streak">0</div>
-          <div class="stat-label">Day streak</div>
+      <div class="cards">
+        <div class="stat">
+          <div class="eyebrow">Today</div>
+          <div class="num" id="todayNum">0</div>
+          <div class="lbl">Breaks taken</div>
+          <div class="meta" id="targetPct">0% of target</div>
         </div>
+        <div class="stat">
+          <div class="eyebrow">Today</div>
+          <div class="num" id="skippedNum">0</div>
+          <div class="lbl">Worked through</div>
+        </div>
+        <div class="stat">
+          <div class="eyebrow">All-time</div>
+          <div class="num" id="totalNum">0</div>
+          <div class="lbl">Breaks taken</div>
+        </div>
+      </div>
 
-        <div class="stat-card">
-          <div class="stat-icon">&#9989;</div>
-          <div class="stat-value" id="todayCompleted">0</div>
-          <div class="stat-label">Today completed</div>
+      <div class="figure">
+        <div class="fig-head">
+          <span class="fig-title">Fig. 01 — Eye rest, last 7 days</span>
+          <span class="fig-goal">Goal · <b id="goalPerDay">14</b> / day</span>
         </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">&#9193;</div>
-          <div class="stat-value" id="todaySkipped">0</div>
-          <div class="stat-label">Today skipped</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">&#127942;</div>
-          <div class="stat-value" id="totalCompleted">0</div>
-          <div class="stat-label">All-time breaks</div>
-        </div>
+        <div class="chart" id="chart"></div>
+        <div class="days" id="days"></div>
       </div>
     </div>
   </div>
 
   <script>
+    function streakText(streak) {
+      if (streak <= 0) return 'Start your streak today.';
+      if (streak === 1) return 'Day one of your streak.';
+      return 'Day ' + streak + ' of your streak.';
+    }
+
+    function renderChart(last7, goal) {
+      const chart = document.getElementById('chart');
+      const days = document.getElementById('days');
+      const maxVal = Math.max(goal, ...last7.map(d => d.completed), 1);
+      // leave headroom above the tallest element for value labels
+      const scaleMax = maxVal * 1.2;
+
+      // goal line (same coordinate space as the bars)
+      const goalLine = document.createElement('div');
+      goalLine.className = 'goal-line';
+      goalLine.style.bottom = ((goal / scaleMax) * 100) + '%';
+      goalLine.innerHTML = '<span class="goal-tag">GOAL</span>';
+      chart.appendChild(goalLine);
+
+      last7.forEach(d => {
+        const bar = document.createElement('div');
+        bar.className = 'bar' + (d.isToday ? ' today' : '');
+        bar.style.height = ((d.completed / scaleMax) * 100) + '%';
+        bar.innerHTML = '<span class="bar-val">' + d.completed + '</span>';
+        chart.appendChild(bar);
+
+        const day = document.createElement('div');
+        day.className = 'day' + (d.isToday ? ' today' : '');
+        day.textContent = d.label;
+        days.appendChild(day);
+      });
+    }
+
     window.horizon.getStats().then(stats => {
-      document.getElementById('streak').textContent = stats.streak;
-      document.getElementById('todayCompleted').textContent = stats.todayCompleted;
-      document.getElementById('todaySkipped').textContent = stats.todaySkipped;
-      document.getElementById('totalCompleted').textContent = stats.totalCompleted;
+      document.getElementById('streakNow').textContent = streakText(stats.streak);
+
+      const best = stats.longestStreak || 0;
+      document.getElementById('streakBest').innerHTML =
+        'Personal best · <b>' + (best > 0 ? best + (best === 1 ? ' day' : ' days') : '—') + '</b>';
+
+      document.getElementById('todayNum').textContent = stats.todayCompleted;
+      document.getElementById('skippedNum').textContent = stats.todaySkipped;
+      document.getElementById('totalNum').textContent = stats.totalCompleted;
+
+      const goal = stats.dailyGoal || 14;
+      const pct = goal > 0 ? Math.round((stats.todayCompleted / goal) * 100) : 0;
+      document.getElementById('targetPct').textContent = pct + '% of target';
+      document.getElementById('goalPerDay').textContent = goal;
+
+      renderChart(stats.last7, goal);
     });
 
     document.getElementById('closeBtn').addEventListener('click', () => {
