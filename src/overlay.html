@@ -23,6 +23,21 @@
       user-select: none;
       cursor: default;
       overflow: hidden;
+      transition: background 1s ease;
+    }
+
+    /* Per-mode backgrounds */
+    body.mode-stars { background: linear-gradient(180deg, #05060f, #0d1b2a 60%, #1b263b); }
+    body.mode-rain { background: linear-gradient(180deg, #1a2027, #243240 70%, #2c3e50); }
+    body.mode-breathing { background: linear-gradient(135deg, #0b132b, #1c2541 60%, #3a506b); }
+
+    /* Foreground content sits above background layers */
+    .content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .emoji {
@@ -76,17 +91,147 @@
       font-size: 16px;
       opacity: 0.4;
       letter-spacing: 1px;
+      z-index: 2;
+    }
+
+    /* Background animation layers */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Stars */
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--dur) ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      from { opacity: 0.1; }
+      to { opacity: var(--max); }
+    }
+
+    /* Rain */
+    .drop {
+      position: absolute;
+      top: -120px;
+      width: 2px;
+      height: 90px;
+      background: linear-gradient(transparent, rgba(174, 198, 255, 0.45));
+      animation: fall var(--dur) linear infinite;
+    }
+    @keyframes fall {
+      from { transform: translateY(-120px); }
+      to { transform: translateY(110vh); }
+    }
+
+    /* Breathing circle */
+    .breathing-circle {
+      position: fixed;
+      z-index: 1;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(95,180,216,0.35), rgba(95,180,216,0.05) 70%, transparent);
+      border: 1px solid rgba(95, 180, 216, 0.3);
+      animation: breathe 8s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.7); opacity: 0.5; }
+      50% { transform: scale(1.5); opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <div class="emoji">🌅</div>
-  <div class="message">Look at the horizon</div>
-  <div class="countdown" id="countdown">20</div>
-  <button class="skip" onclick="window.horizon.skipBreak()">Skip</button>
-  <div class="hint">Rest your eyes — focus on something far away</div>
+  <div class="bg-layer" id="stars"></div>
+  <div class="bg-layer" id="rain"></div>
+  <div class="breathing-circle" id="breathingCircle" style="display:none;"></div>
+
+  <div class="content">
+    <div class="emoji" id="emoji">🌅</div>
+    <div class="message">Look at the horizon</div>
+    <div class="countdown" id="countdown">20</div>
+    <button class="skip" onclick="window.horizon.skipBreak()">Skip</button>
+  </div>
+  <div class="hint" id="hint">Rest your eyes — focus on something far away</div>
 
   <script>
+    const MODES = {
+      sunrise: {
+        emoji: '🌅',
+        hint: 'Rest your eyes — focus on something far away',
+      },
+      stars: {
+        emoji: '🌙',
+        hint: 'Let your eyes wander across the stars',
+      },
+      rain: {
+        emoji: '🌧️',
+        hint: 'Breathe slowly with the rain',
+      },
+      breathing: {
+        emoji: '',
+        hint: 'Breathe in as it grows, out as it shrinks',
+      },
+    };
+
+    function buildStars() {
+      const container = document.getElementById('stars');
+      const count = 70;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        const size = (Math.random() * 2 + 1).toFixed(1);
+        const left = (Math.random() * 100).toFixed(2);
+        const top = (Math.random() * 100).toFixed(2);
+        const dur = (Math.random() * 2.5 + 1.5).toFixed(2);
+        const max = (Math.random() * 0.5 + 0.5).toFixed(2);
+        html += `<div class="star" style="width:${size}px;height:${size}px;left:${left}%;top:${top}%;--dur:${dur}s;--max:${max}"></div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function buildRain() {
+      const container = document.getElementById('rain');
+      const count = 60;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        const left = (Math.random() * 100).toFixed(2);
+        const dur = (Math.random() * 0.6 + 0.6).toFixed(2);
+        const delay = (Math.random() * 2).toFixed(2);
+        const opacity = (Math.random() * 0.5 + 0.3).toFixed(2);
+        html += `<div class="drop" style="left:${left}%;--dur:${dur}s;animation-delay:-${delay}s;opacity:${opacity}"></div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function applyMode(mode) {
+      const cfg = MODES[mode];
+      document.body.classList.add('mode-' + mode);
+
+      const emojiEl = document.getElementById('emoji');
+      if (cfg.emoji) {
+        emojiEl.textContent = cfg.emoji;
+      } else {
+        emojiEl.style.display = 'none';
+      }
+      document.getElementById('hint').textContent = cfg.hint;
+
+      if (mode === 'stars') buildStars();
+      if (mode === 'rain') buildRain();
+      if (mode === 'breathing') {
+        document.getElementById('breathingCircle').style.display = 'block';
+      }
+    }
+
+    // Pick a random animation each break
+    const modeKeys = Object.keys(MODES);
+    const mode = modeKeys[Math.floor(Math.random() * modeKeys.length)];
+    applyMode(mode);
+
     window.horizon.getSettings().then(settings => {
       let remaining = settings.breakSeconds;
       const el = document.getElementById('countdown');
