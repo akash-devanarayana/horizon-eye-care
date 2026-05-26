@@ -383,6 +383,17 @@
         </label>
       </div>
 
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          Pause during fullscreen apps
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="dndEnabled" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
       <div class="divider"></div>
 
       <div class="actions">
@@ -399,17 +410,19 @@
       document.getElementById('workMinutes').value = settings.workMinutes;
       document.getElementById('breakSeconds').value = settings.breakSeconds;
       document.getElementById('soundEnabled').checked = settings.soundEnabled !== false;
+      document.getElementById('dndEnabled').checked = settings.dndEnabled !== false;
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
       const workMinutes = parseInt(document.getElementById('workMinutes').value, 10) || 20;
       const breakSeconds = parseInt(document.getElementById('breakSeconds').value, 10) || 20;
       const soundEnabled = document.getElementById('soundEnabled').checked;
+      const dndEnabled = document.getElementById('dndEnabled').checked;
 
       const flash = document.getElementById('flash');
       flash.classList.add('show');
 
-      window.horizon.saveSettings({ workMinutes, breakSeconds, soundEnabled });
+      window.horizon.saveSettings({ workMinutes, breakSeconds, soundEnabled, dndEnabled });
       setTimeout(() => flash.classList.remove('show'), 1100);
     });
 

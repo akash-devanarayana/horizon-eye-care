@@ -9,12 +9,36 @@ let tray = null;
 let workTimer = null;
 let breakTimer = null;
 let tooltipInterval = null;
+let dndInterval = null;
 let paused = false;
+let dndActive = false;
 let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true };
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true };
+
+// --- Do Not Disturb: detect fullscreen apps via the Windows notification-state API ---
+let queryNotificationState = null;
+try {
+  const koffi = require('koffi');
+  const shell32 = koffi.load('shell32.dll');
+  const fn = shell32.func('int __stdcall SHQueryUserNotificationState(_Out_ int *pquns)');
+  queryNotificationState = () => {
+    const ptr = [0];
+    const hr = fn(ptr);
+    return hr === 0 ? ptr[0] : null;
+  };
+} catch {
+  queryNotificationState = null;
+}
+
+function isFullscreenAppRunning() {
+  if (!queryNotificationState) return false;
+  const state = queryNotificationState();
+  // 2=BUSY, 3=D3D fullscreen, 4=presentation mode, 7=fullscreen Store app
+  return state === 2 || state === 3 || state === 4 || state === 7;
+}
 
 function loadSettings() {
   try {
@@ -123,6 +147,8 @@ function updateTooltip() {
   if (!tray) return;
   if (paused) {
     tray.setToolTip('Horizon — Paused');
+  } else if (dndActive) {
+    tray.setToolTip('Horizon — Paused (fullscreen app)');
   } else if (onBreak) {
     tray.setToolTip('Horizon — On break');
   } else if (workStartedAt) {
@@ -136,6 +162,44 @@ function startTooltipUpdates() {
   clearInterval(tooltipInterval);
   tooltipInterval = setInterval(updateTooltip, 1000);
   updateTooltip();
+}
+
+function checkDnd() {
+  const enabled = loadSettings().dndEnabled;
+
+  // If the feature is off, make sure any auto-pause is lifted.
+  if (!enabled) {
+    if (dndActive) {
+      dndActive = false;
+      if (!paused && !onBreak) startWorkTimer();
+      updateTooltip();
+    }
+    return;
+  }
+
+  // Don't interfere while a break overlay is showing.
+  if (onBreak) return;
+
+  const fullscreen = isFullscreenAppRunning();
+
+  if (fullscreen && !dndActive) {
+    // Entered a fullscreen app — pause the countdown.
+    dndActive = true;
+    clearTimeout(workTimer);
+    workTimer = null;
+    workStartedAt = null;
+    updateTooltip();
+  } else if (!fullscreen && dndActive) {
+    // Left the fullscreen app — resume (unless manually paused).
+    dndActive = false;
+    if (!paused) startWorkTimer();
+    updateTooltip();
+  }
+}
+
+function startDndMonitor() {
+  clearInterval(dndInterval);
+  dndInterval = setInterval(checkDnd, 3000);
 }
 
 function playSound(file) {
@@ -170,7 +234,7 @@ function startBreak() {
 }
 
 function startWorkTimer() {
-  if (paused) return;
+  if (paused || dndActive) return;
   workStartedAt = Date.now();
   updateTooltip();
   workTimer = setTimeout(() => {
@@ -228,7 +292,7 @@ function openSettings() {
   }
   settingsWin = new BrowserWindow({
     width: 540,
-    height: 720,
+    height: 790,
     resizable: false,
     frame: false,
     transparent: true,
@@ -302,6 +366,7 @@ app.whenReady().then(() => {
   createTray();
   startWorkTimer();
   startTooltipUpdates();
+  startDndMonitor();
 });
 
 app.on('window-all-closed', (e) => {
