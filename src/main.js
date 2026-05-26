@@ -8,6 +8,7 @@ let statsWin = null;
 let tray = null;
 let workTimer = null;
 let breakTimer = null;
+let breakEndSoundTimer = null;
 let tooltipInterval = null;
 let dndInterval = null;
 let paused = false;
@@ -222,14 +223,25 @@ function playSound(file) {
 
 function endBreak(skipped) {
   clearTimeout(breakTimer);
+  clearTimeout(breakEndSoundTimer);
   breakTimer = null;
+  breakEndSoundTimer = null;
   recordBreak(skipped ? 'skipped' : 'completed');
-  playSound('break-end.wav');
-  setTimeout(() => {
+  if (skipped) {
+    // User bailed early — play the chime, then close after it plays.
+    playSound('break-end.wav');
+    setTimeout(() => {
+      if (overlay) overlay.close();
+      onBreak = false;
+      startWorkTimer();
+    }, 500);
+  } else {
+    // Natural end — the chime already played during the final second,
+    // so close immediately as the countdown hits zero.
     if (overlay) overlay.close();
     onBreak = false;
     startWorkTimer();
-  }, 600);
+  }
 }
 
 function startBreak() {
@@ -238,11 +250,20 @@ function startBreak() {
   updateTooltip();
   createOverlay();
 
+  const breakMs = getBreakDuration();
+
   overlay.webContents.once('did-finish-load', () => {
     playSound('break-start.wav');
   });
 
-  breakTimer = setTimeout(endBreak, getBreakDuration());
+  // Play the end chime so it finishes right as the break ends, so the
+  // overlay can close instantly at zero instead of lingering.
+  const lead = 700;
+  if (breakMs > lead + 800) {
+    breakEndSoundTimer = setTimeout(() => playSound('break-end.wav'), breakMs - lead);
+  }
+
+  breakTimer = setTimeout(() => endBreak(false), breakMs);
 }
 
 function startWorkTimer() {

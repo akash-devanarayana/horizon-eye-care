@@ -58,8 +58,37 @@
       margin-bottom: 48px;
     }
 
+    /* Circular progress timer */
+    .timer-ring {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timer-ring svg {
+      position: absolute;
+      inset: 0;
+      transform: rotate(-90deg);
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.12);
+      stroke-width: 6;
+    }
+
+    .ring-progress {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.85);
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+
     .countdown {
-      font-size: 96px;
+      font-size: 80px;
       font-weight: 200;
       font-variant-numeric: tabular-nums;
       opacity: 0.9;
@@ -154,7 +183,13 @@
   <div class="content">
     <div class="emoji" id="emoji">🌅</div>
     <div class="message">Look at the horizon</div>
-    <div class="countdown" id="countdown">20</div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 240 240">
+        <circle class="ring-track" cx="120" cy="120" r="110"></circle>
+        <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="110"></circle>
+      </svg>
+      <div class="countdown" id="countdown">20</div>
+    </div>
     <button class="skip" onclick="window.horizon.skipBreak()">Skip</button>
   </div>
   <div class="hint" id="hint">Rest your eyes — focus on something far away</div>
@@ -233,9 +268,23 @@
     applyMode(mode);
 
     window.horizon.getSettings().then(settings => {
-      let remaining = settings.breakSeconds;
+      const total = settings.breakSeconds;
+      let remaining = total;
       const el = document.getElementById('countdown');
       el.textContent = remaining;
+
+      // Set up the progress ring
+      const ring = document.getElementById('ringProgress');
+      const radius = ring.r.baseVal.value;
+      const circumference = 2 * Math.PI * radius;
+      ring.style.strokeDasharray = circumference;
+      ring.style.strokeDashoffset = '0'; // full ring
+
+      // Animate the ring emptying over the whole break, smoothly
+      requestAnimationFrame(() => {
+        ring.style.transition = `stroke-dashoffset ${total}s linear`;
+        ring.style.strokeDashoffset = circumference; // empties to nothing
+      });
 
       const timer = setInterval(() => {
         remaining--;
