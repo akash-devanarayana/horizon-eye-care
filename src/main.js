@@ -324,8 +324,8 @@ function openSettings() {
     return;
   }
   settingsWin = new BrowserWindow({
-    width: 540,
-    height: 790,
+    width: 560,
+    height: 760,
     resizable: false,
     frame: false,
     transparent: true,
