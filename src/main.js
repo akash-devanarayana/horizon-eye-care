@@ -205,10 +205,18 @@ function startDndMonitor() {
 function playSound(file) {
   const settings = loadSettings();
   if (!settings.soundEnabled) return;
-  const soundPath = path.join(__dirname, '..', 'assets', 'sounds', file).replace(/\\/g, '/');
-  const win = overlay || settingsWin;
-  if (win && !win.isDestroyed()) {
-    win.webContents.executeJavaScript(`new Audio('file:///${soundPath}').play().catch(()=>{})`);
+  const win = overlay || settingsWin || statsWin;
+  if (!win || win.isDestroyed()) return;
+  try {
+    // Read via fs (asar-aware) and play as a data URL. A file:// URL into
+    // an asar archive can't be played by the renderer's media loader.
+    const filePath = path.join(__dirname, '..', 'assets', 'sounds', file);
+    const base64 = fs.readFileSync(filePath).toString('base64');
+    win.webContents.executeJavaScript(
+      `new Audio('data:audio/wav;base64,${base64}').play().catch(()=>{})`
+    );
+  } catch {
+    // Ignore playback errors (missing file, no audio device, etc.)
   }
 }
 
@@ -229,6 +237,10 @@ function startBreak() {
   workStartedAt = null;
   updateTooltip();
   createOverlay();
+
+  overlay.webContents.once('did-finish-load', () => {
+    playSound('break-start.wav');
+  });
 
   breakTimer = setTimeout(endBreak, getBreakDuration());
 }
