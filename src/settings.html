@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Horizon · Settings</title>
 <link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="theme.css">
 <style>
   :root {
     --paper: #f4f0e8;
@@ -382,6 +383,21 @@
           </div>
         </div>
       </div>
+
+      <!-- G: Theme -->
+      <div class="section">
+        <div class="toggle-row">
+          <div class="sec-head" style="margin-bottom:0;">
+            <span class="sec-letter">G</span>
+            <span class="sec-title">Theme</span>
+            <span class="sec-desc">The look of Horizon's windows.</span>
+          </div>
+          <div class="chips" id="themeChips">
+            <button class="chip" data-v="daylight">Daylight</button>
+            <button class="chip" data-v="midnight">Midnight</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <button class="save" id="saveBtn">Save &amp; Resume &rarr;</button>
@@ -394,6 +410,20 @@
     const soundToggle = document.getElementById('soundToggle');
     const dndToggle = document.getElementById('dndToggle');
     const autoStartToggle = document.getElementById('autoStartToggle');
+    let currentTheme = 'daylight';
+
+    function applyTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('#themeChips .chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.v === theme);
+      });
+    }
+
+    document.querySelectorAll('#themeChips .chip').forEach(chip => {
+      // Live-preview the theme on the Settings window itself.
+      chip.addEventListener('click', () => applyTheme(chip.dataset.v));
+    });
 
     function syncChips(containerId, input) {
       const v = parseInt(input.value, 10);
@@ -432,6 +462,7 @@
       setToggle(soundToggle, settings.soundEnabled !== false);
       setToggle(dndToggle, settings.dndEnabled !== false);
       setToggle(autoStartToggle, settings.autoStart === true);
+      applyTheme(settings.theme === 'midnight' ? 'midnight' : 'daylight');
       syncChips('workChips', workInput);
       syncChips('breakChips', breakInput);
       syncChips('goalChips', goalInput);
@@ -444,7 +475,8 @@
       const soundEnabled = soundToggle.classList.contains('on');
       const dndEnabled = dndToggle.classList.contains('on');
       const autoStart = autoStartToggle.classList.contains('on');
-      window.horizon.saveSettings({ workMinutes, breakSeconds, dailyGoal, soundEnabled, dndEnabled, autoStart });
+      const theme = currentTheme;
+      window.horizon.saveSettings({ workMinutes, breakSeconds, dailyGoal, soundEnabled, dndEnabled, autoStart, theme });
     });
 
     document.getElementById('closeBtn').addEventListener('click', () => {

@@ -1,0 +1,21 @@
+/* Horizon themes.
+   Default (Daylight) variables live in each page's :root.
+   Midnight overrides them when <html data-theme="midnight"> is set.
+   The [data-theme] attribute selector outranks a plain :root, so these win
+   regardless of stylesheet order. */
+
+:root[data-theme="midnight"] {
+  --paper: #0f1c28;
+  --paper-2: #18293a;
+  --ink: #e8e2d4;
+  --muted: #7d8a96;
+  --muted-2: #aeb9c2;
+  --gold: #d9c25a;
+  --gold-deep: #e3cd6f;
+  --line: rgba(232, 226, 212, 0.13);
+}
+
+/* Smooth the switch when toggling theme live in Settings. */
+body {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}

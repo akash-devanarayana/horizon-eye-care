@@ -24,7 +24,7 @@ let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14, autoStart: false };
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14, autoStart: false, theme: 'daylight' };
 
 function applyAutoStart(enabled) {
   // Writes/removes the Windows "Run at login" registry entry for the packaged app.
@@ -523,7 +523,7 @@ function openSettings() {
   }
   settingsWin = new BrowserWindow({
     width: 560,
-    height: 980,
+    height: 1060,
     resizable: false,
     frame: false,
     transparent: true,

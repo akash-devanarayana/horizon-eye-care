@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Horizon Update</title>
 <link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="theme.css">
 <style>
   :root {
     --paper: #f4f0e8;
@@ -132,6 +133,9 @@
     </div>
   </div>
   <script>
+    window.horizon.getSettings().then(s => {
+      if (s && s.theme) document.documentElement.setAttribute('data-theme', s.theme);
+    });
     window.horizon.getUpdateInfo().then(info => {
       if (info && info.version) document.getElementById('ver').textContent = info.version;
     });

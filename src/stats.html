@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Horizon · Stats</title>
 <link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="theme.css">
 <style>
   :root {
     --paper: #f4f0e8;
@@ -286,6 +287,10 @@
         days.appendChild(day);
       });
     }
+
+    window.horizon.getSettings().then(s => {
+      if (s && s.theme) document.documentElement.setAttribute('data-theme', s.theme);
+    });
 
     window.horizon.getStats().then(stats => {
       document.getElementById('streakNow').textContent = streakText(stats.streak);
