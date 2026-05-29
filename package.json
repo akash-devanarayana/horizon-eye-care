@@ -5,11 +5,22 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "test": "jest",
+    "test:ci": "jest --ci --reporters=default --reporters=jest-junit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/test"
+    ],
+    "transform": {}
   },
   "devDependencies": {
     "electron": "^35.7.5",
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "jest": "^30.4.2",
+    "jest-junit": "^17.0.0"
   },
   "author": "Horizon",
   "build": {
