@@ -1,301 +1,431 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horizon Break</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="utf-8" />
+<title>Horizon — Break</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="stylesheet" href="fonts.css" />
+<style>
+  :root{
+    --ink-0:#0b1620;      /* deepest */
+    --ink-1:#0f1c28;      /* base navy */
+    --ink-2:#14283a;      /* lifted navy */
+    --cream-0:#f4f0e8;
+    --cream-1:#e8e2d4;
+    --gold:#d9c25a;
+    --font: "Space Grotesk", ui-sans-serif, system-ui, "Segoe UI",
+            "Helvetica Neue", Arial, sans-serif;
+  }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #e0e0e0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      user-select: none;
-      cursor: default;
-      overflow: hidden;
-      transition: background 1s ease;
-    }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:var(--ink-1);
+    color:var(--cream-0);
+    font-family:var(--font);
+    overflow:hidden;
+    user-select:none;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
 
-    /* Per-mode backgrounds */
-    body.mode-stars { background: linear-gradient(180deg, #05060f, #0d1b2a 60%, #1b263b); }
-    body.mode-rain { background: linear-gradient(180deg, #1a2027, #243240 70%, #2c3e50); }
-    body.mode-breathing { background: linear-gradient(135deg, #0b132b, #1c2541 60%, #3a506b); }
+  /* ---------- Stage ---------- */
+  #stage{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(120% 120% at 50% 30%, var(--ink-2) 0%, var(--ink-1) 45%, var(--ink-0) 100%);
+    overflow:hidden;
+  }
+  #stage::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(110% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.45) 100%);
+    z-index:6;
+  }
 
-    /* Foreground content sits above background layers */
-    .content {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+  /* ---------- Scene layers (only the active one is shown) ---------- */
+  .scene{
+    position:absolute; inset:0; opacity:0;
+    transition:opacity 1.6s ease;
+    pointer-events:none; z-index:1;
+  }
+  body[data-scene="dawn"]      .scene--dawn,
+  body[data-scene="stars"]     .scene--stars,
+  body[data-scene="rain"]      .scene--rain,
+  body[data-scene="breathe"]   .scene--breathe{ opacity:1; }
 
-    .emoji {
-      font-size: 72px;
-      margin-bottom: 24px;
-      animation: float 3s ease-in-out infinite;
-    }
+  /* ===== SCENE 1 — DAWN ===== */
+  .scene--dawn .sky{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg,
+      var(--ink-0) 0%, var(--ink-1) 42%, var(--ink-2) 70%, #1b3346 100%);
+  }
+  .scene--dawn .sun{
+    position:absolute; left:50%; bottom:26%;
+    width:46vmin; height:46vmin; transform:translate(-50%,50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(217,194,90,0.55) 0%, rgba(217,194,90,0.28) 30%,
+      rgba(217,194,90,0.10) 52%, transparent 70%);
+    animation:sunrise 26s ease-in-out infinite alternate;
+    filter:blur(2px);
+  }
+  .scene--dawn .horizon-glow{
+    position:absolute; left:0; right:0; bottom:24%;
+    height:34vmin;
+    background:radial-gradient(60% 100% at 50% 100%,
+      rgba(217,194,90,0.20) 0%, rgba(217,194,90,0.06) 40%, transparent 72%);
+  }
+  .scene--dawn .land{
+    position:absolute; left:0; right:0; bottom:0; height:26%;
+    background:linear-gradient(180deg, #0c1a26 0%, #0a151f 100%);
+    box-shadow:0 -1px 0 rgba(217,194,90,0.18);
+  }
+  .scene--dawn .land::before{
+    content:""; position:absolute; left:0; right:0; top:-1px; height:40%;
+    background:linear-gradient(180deg, rgba(217,194,90,0.10), transparent);
+  }
+  @keyframes sunrise{
+    0%{ transform:translate(-50%,58%) scale(0.96); opacity:0.85; }
+    100%{ transform:translate(-50%,30%) scale(1.04); opacity:1; }
+  }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
-    }
+  /* ===== SCENE 2 — STARFIELD ===== */
+  .scene--stars .star{
+    position:absolute; border-radius:50%;
+    background:var(--cream-0);
+    animation:twinkle var(--tw,5s) ease-in-out infinite;
+    will-change:opacity, transform;
+  }
+  .scene--stars .drift{ animation:twinkle var(--tw,5s) ease-in-out infinite, drift var(--dr,90s) linear infinite; }
+  @keyframes twinkle{
+    0%,100%{ opacity:var(--lo,0.15); }
+    50%{ opacity:var(--hi,0.9); }
+  }
+  @keyframes drift{
+    0%{ transform:translate(0,0); }
+    100%{ transform:translate(6vw,-3vh); }
+  }
+  .scene--stars .milky{
+    position:absolute; inset:0;
+    background:radial-gradient(50% 38% at 50% 42%,
+      rgba(120,150,180,0.10) 0%, transparent 70%);
+  }
 
-    .message {
-      font-size: 48px;
-      font-weight: 300;
-      letter-spacing: 2px;
-      margin-bottom: 48px;
-    }
+  /* ===== SCENE 3 — RAIN ===== */
+  .scene--rain .drop{
+    position:absolute; top:-14vh;
+    width:1px; height:14vh;
+    background:linear-gradient(180deg, transparent, rgba(232,226,212,0.0) 0%,
+      rgba(232,226,212,0.28) 60%, rgba(232,226,212,0.0) 100%);
+    animation:fall var(--fd,5s) linear infinite;
+    will-change:transform;
+  }
+  @keyframes fall{
+    0%{ transform:translateY(0); opacity:0; }
+    8%{ opacity:1; }
+    92%{ opacity:1; }
+    100%{ transform:translateY(128vh); opacity:0; }
+  }
+  .scene--rain .mist{
+    position:absolute; left:0; right:0; bottom:0; height:40%;
+    background:linear-gradient(180deg, transparent, rgba(11,22,32,0.6));
+  }
 
-    /* Circular progress timer */
-    .timer-ring {
-      position: relative;
-      width: 240px;
-      height: 240px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  /* ===== SCENE 4 — BREATHING ===== */
+  .scene--breathe .breath{
+    position:absolute; left:50%; top:50%;
+    width:62vmin; height:62vmin; transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,
+      rgba(217,194,90,0.16) 0%, rgba(217,194,90,0.06) 42%, transparent 68%);
+    animation:breathe 11s ease-in-out infinite;
+  }
+  .scene--breathe .breath-ring{
+    position:absolute; left:50%; top:50%;
+    width:52vmin; height:52vmin; transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:1px solid rgba(217,194,90,0.22);
+    animation:breathe 11s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%,100%{ transform:translate(-50%,-50%) scale(0.82); opacity:0.55; }
+    45%,55%{ transform:translate(-50%,-50%) scale(1.12); opacity:1; }
+  }
 
-    .timer-ring svg {
-      position: absolute;
-      inset: 0;
-      transform: rotate(-90deg);
-    }
+  /* ---------- Overlay content ---------- */
+  .overlay{
+    position:relative; z-index:5;
+    display:flex; flex-direction:column; align-items:center;
+    gap:clamp(28px, 4.4vmin, 54px);
+    text-align:center; padding:6vmin;
+    animation:fadeUp 1.8s ease both;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:none; }
+  }
 
-    .ring-track {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.12);
-      stroke-width: 6;
-    }
+  .message{
+    font-weight:300;
+    font-size:clamp(30px, 6.2vmin, 76px);
+    letter-spacing:-0.015em;
+    line-height:1.05;
+    color:var(--cream-0);
+    margin:0;
+    text-wrap:balance;
+  }
+  .kicker{
+    font-size:clamp(10px, 1.5vmin, 14px);
+    letter-spacing:0.42em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:500;
+    opacity:0.85;
+    margin:0 0 -8px;
+    padding-left:0.42em;
+  }
 
-    .ring-progress {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.85);
-      stroke-width: 6;
-      stroke-linecap: round;
-    }
+  /* ---------- Countdown ring ---------- */
+  .ring-wrap{
+    position:relative;
+    width:clamp(180px, 30vmin, 300px);
+    height:clamp(180px, 30vmin, 300px);
+  }
+  .ring-wrap svg{ width:100%; height:100%; transform:rotate(-90deg); display:block; }
+  .ring-track{ fill:none; stroke:rgba(232,226,212,0.10); }
+  .ring-prog{
+    fill:none; stroke:var(--gold); stroke-linecap:round;
+    filter:drop-shadow(0 0 6px rgba(217,194,90,0.45));
+    transition:stroke-dashoffset 0.25s linear;
+  }
+  .ring-num{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:2px;
+  }
+  .ring-num .n{
+    font-size:clamp(54px, 11vmin, 128px);
+    font-weight:300;
+    font-variant-numeric:tabular-nums;
+    line-height:1; color:var(--cream-0);
+  }
+  .ring-num .s{
+    font-size:clamp(10px,1.5vmin,13px);
+    letter-spacing:0.34em; text-transform:uppercase;
+    color:var(--cream-1); opacity:0.5;
+  }
 
-    .countdown {
-      font-size: 80px;
-      font-weight: 200;
-      font-variant-numeric: tabular-nums;
-      opacity: 0.9;
-    }
+  .hint{
+    font-size:clamp(14px, 2.1vmin, 21px);
+    font-weight:300;
+    color:var(--cream-1);
+    opacity:0.62;
+    margin:0; max-width:34ch;
+    line-height:1.5;
+    text-wrap:balance;
+  }
 
-    .skip {
-      margin-top: 48px;
-      padding: 10px 28px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 8px;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 16px;
-      font-family: inherit;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: all 0.2s;
-    }
+  .phase{
+    height:1.4em; margin:-6px 0 -2px;
+    font-size:clamp(13px,1.9vmin,18px);
+    letter-spacing:0.3em; text-transform:uppercase;
+    color:var(--gold); opacity:0; font-weight:400;
+    transition:opacity .8s ease;
+  }
+  body[data-scene="breathe"] .phase{ opacity:0.8; }
+  body[data-scene="breathe"] .hint{ display:none; }
 
-    .skip:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.8);
-      border-color: rgba(255, 255, 255, 0.5);
-    }
+  /* ---------- Skip (low emphasis) ---------- */
+  .skip{
+    position:fixed; left:50%; bottom:5.5vmin; transform:translateX(-50%);
+    z-index:7;
+    background:none; border:none; cursor:pointer;
+    color:var(--cream-1); opacity:0.32;
+    font-family:inherit; font-size:clamp(12px,1.6vmin,15px);
+    letter-spacing:0.14em; text-transform:uppercase; font-weight:400;
+    padding:10px 18px; border-radius:999px;
+    transition:opacity .4s ease;
+  }
+  .skip:hover{ opacity:0.7; }
+  .skip .x{ display:inline-block; margin-right:8px; opacity:0.7; }
 
-    .hint {
-      position: absolute;
-      bottom: 48px;
-      font-size: 16px;
-      opacity: 0.4;
-      letter-spacing: 1px;
-      z-index: 2;
-    }
-
-    /* Background animation layers */
-    .bg-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    /* Stars */
-    .star {
-      position: absolute;
-      background: #fff;
-      border-radius: 50%;
-      animation: twinkle var(--dur) ease-in-out infinite alternate;
-    }
-    @keyframes twinkle {
-      from { opacity: 0.1; }
-      to { opacity: var(--max); }
-    }
-
-    /* Rain */
-    .drop {
-      position: absolute;
-      top: -120px;
-      width: 2px;
-      height: 90px;
-      background: linear-gradient(transparent, rgba(174, 198, 255, 0.45));
-      animation: fall var(--dur) linear infinite;
-    }
-    @keyframes fall {
-      from { transform: translateY(-120px); }
-      to { transform: translateY(110vh); }
-    }
-
-    /* Breathing circle */
-    .breathing-circle {
-      position: fixed;
-      z-index: 1;
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(95,180,216,0.35), rgba(95,180,216,0.05) 70%, transparent);
-      border: 1px solid rgba(95, 180, 216, 0.3);
-      animation: breathe 8s ease-in-out infinite;
-    }
-    @keyframes breathe {
-      0%, 100% { transform: scale(0.7); opacity: 0.5; }
-      50% { transform: scale(1.5); opacity: 1; }
-    }
-  </style>
+  @media (prefers-reduced-motion: reduce){
+    .scene--dawn .sun, .scene--breathe .breath, .scene--breathe .breath-ring,
+    .scene--stars .star, .scene--rain .drop{ animation:none !important; }
+  }
+</style>
 </head>
-<body>
-  <div class="bg-layer" id="stars"></div>
-  <div class="bg-layer" id="rain"></div>
-  <div class="breathing-circle" id="breathingCircle" style="display:none;"></div>
-
-  <div class="content">
-    <div class="emoji" id="emoji">🌅</div>
-    <div class="message">Look at the horizon</div>
-    <div class="timer-ring">
-      <svg viewBox="0 0 240 240">
-        <circle class="ring-track" cx="120" cy="120" r="110"></circle>
-        <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="110"></circle>
-      </svg>
-      <div class="countdown" id="countdown">20</div>
+<body data-scene="dawn">
+  <div id="stage">
+    <!-- Scene 1: Dawn -->
+    <div class="scene scene--dawn">
+      <div class="sky"></div>
+      <div class="horizon-glow"></div>
+      <div class="sun"></div>
+      <div class="land"></div>
     </div>
-    <button class="skip" onclick="window.horizon.skipBreak()">Skip</button>
+
+    <!-- Scene 2: Starfield -->
+    <div class="scene scene--stars">
+      <div class="milky"></div>
+    </div>
+
+    <!-- Scene 3: Rain -->
+    <div class="scene scene--rain">
+      <div class="mist"></div>
+    </div>
+
+    <!-- Scene 4: Breathing -->
+    <div class="scene scene--breathe">
+      <div class="breath"></div>
+      <div class="breath-ring"></div>
+    </div>
+
+    <!-- Shared overlay -->
+    <div class="overlay">
+      <p class="kicker">Horizon · 20·20·20</p>
+      <h1 class="message" id="message">Look at the horizon</h1>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 240 240" aria-hidden="true">
+          <circle class="ring-track" cx="120" cy="120" r="110" stroke-width="3"></circle>
+          <circle class="ring-prog"  cx="120" cy="120" r="110" stroke-width="4" id="ringProg"></circle>
+        </svg>
+        <div class="ring-num">
+          <span class="n" id="count">20</span>
+          <span class="s">seconds</span>
+        </div>
+      </div>
+
+      <div class="phase" id="phase">breathe in</div>
+      <p class="hint" id="hint">Rest your eyes — focus on something far away.</p>
+    </div>
+
+    <button class="skip" id="skip"><span class="x">×</span>Skip break</button>
   </div>
-  <div class="hint" id="hint">Rest your eyes — focus on something far away</div>
 
-  <script>
-    const MODES = {
-      sunrise: {
-        emoji: '🌅',
-        hint: 'Rest your eyes — focus on something far away',
-      },
-      stars: {
-        emoji: '🌙',
-        hint: 'Let your eyes wander across the stars',
-      },
-      rain: {
-        emoji: '🌧️',
-        hint: 'Breathe slowly with the rain',
-      },
-      breathing: {
-        emoji: '',
-        hint: 'Breathe in as it grows, out as it shrinks',
-      },
-    };
+<script>
+(function(){
+  "use strict";
 
-    function buildStars() {
-      const container = document.getElementById('stars');
-      const count = 70;
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        const size = (Math.random() * 2 + 1).toFixed(1);
-        const left = (Math.random() * 100).toFixed(2);
-        const top = (Math.random() * 100).toFixed(2);
-        const dur = (Math.random() * 2.5 + 1.5).toFixed(2);
-        const max = (Math.random() * 0.5 + 0.5).toFixed(2);
-        html += `<div class="star" style="width:${size}px;height:${size}px;left:${left}%;top:${top}%;--dur:${dur}s;--max:${max}"></div>`;
-      }
-      container.innerHTML = html;
+  var SCENES = {
+    dawn:    { message:"Look at the horizon",    hint:"Rest your eyes — focus on something far away." },
+    stars:   { message:"Look to the distance",   hint:"Let your gaze fall soft on the far dark." },
+    rain:    { message:"Soften your gaze",       hint:"Unfocus. Let the room blur for a moment." },
+    breathe: { message:"Breathe, and look away", hint:"" }
+  };
+
+  var ring   = document.getElementById('ringProg');
+  var countEl= document.getElementById('count');
+  var msgEl  = document.getElementById('message');
+  var hintEl = document.getElementById('hint');
+  var phaseEl= document.getElementById('phase');
+  var body   = document.body;
+
+  // Ring geometry
+  var R = 110, C = 2 * Math.PI * R;
+  ring.style.strokeDasharray = C.toFixed(2);
+  ring.style.strokeDashoffset = "0";
+
+  var DURATION = 20; // overwritten from settings below
+
+  // --- Starfield + rain generated once (pure DOM, no network) ---
+  function buildStars(){
+    var host = document.querySelector('.scene--stars');
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<90;i++){
+      var s = document.createElement('div');
+      s.className = 'star' + (i%9===0 ? ' drift' : '');
+      var size = (Math.random()*2.2 + 0.6);
+      s.style.width = s.style.height = size.toFixed(1)+'px';
+      s.style.left = (Math.random()*100).toFixed(2)+'%';
+      s.style.top  = (Math.random()*86).toFixed(2)+'%';
+      s.style.setProperty('--tw', (Math.random()*5+3.5).toFixed(1)+'s');
+      s.style.setProperty('--dr', (Math.random()*60+70).toFixed(0)+'s');
+      s.style.setProperty('--lo', (Math.random()*0.12+0.06).toFixed(2));
+      s.style.setProperty('--hi', (Math.random()*0.45+0.5).toFixed(2));
+      s.style.animationDelay = (-Math.random()*6).toFixed(1)+'s';
+      if(size>2.2) s.style.boxShadow = '0 0 6px rgba(244,240,232,0.6)';
+      frag.appendChild(s);
     }
-
-    function buildRain() {
-      const container = document.getElementById('rain');
-      const count = 60;
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        const left = (Math.random() * 100).toFixed(2);
-        const dur = (Math.random() * 0.6 + 0.6).toFixed(2);
-        const delay = (Math.random() * 2).toFixed(2);
-        const opacity = (Math.random() * 0.5 + 0.3).toFixed(2);
-        html += `<div class="drop" style="left:${left}%;--dur:${dur}s;animation-delay:-${delay}s;opacity:${opacity}"></div>`;
-      }
-      container.innerHTML = html;
+    host.appendChild(frag);
+  }
+  function buildRain(){
+    var host = document.querySelector('.scene--rain');
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<46;i++){
+      var d = document.createElement('div');
+      d.className = 'drop';
+      d.style.left = (Math.random()*100).toFixed(2)+'%';
+      var dur = (Math.random()*2.8 + 4.2);
+      d.style.setProperty('--fd', dur.toFixed(1)+'s');
+      d.style.animationDelay = (-Math.random()*dur).toFixed(1)+'s';
+      d.style.opacity = (Math.random()*0.4+0.4).toFixed(2);
+      frag.appendChild(d);
     }
+    host.appendChild(frag);
+  }
+  buildStars();
+  buildRain();
 
-    function applyMode(mode) {
-      const cfg = MODES[mode];
-      document.body.classList.add('mode-' + mode);
-
-      const emojiEl = document.getElementById('emoji');
-      if (cfg.emoji) {
-        emojiEl.textContent = cfg.emoji;
-      } else {
-        emojiEl.style.display = 'none';
-      }
-      document.getElementById('hint').textContent = cfg.hint;
-
-      if (mode === 'stars') buildStars();
-      if (mode === 'rain') buildRain();
-      if (mode === 'breathing') {
-        document.getElementById('breathingCircle').style.display = 'block';
-      }
+  // --- Breathing phase cue (synced to the 11s CSS cycle) ---
+  var breatheTimer = null;
+  function startBreathePhase(){
+    stopBreathePhase();
+    var cycle = 11000, t0 = performance.now();
+    function tick(){
+      var p = ((performance.now()-t0) % cycle) / cycle;
+      phaseEl.textContent = p < 0.5 ? 'breathe in' : 'breathe out';
+      breatheTimer = requestAnimationFrame(tick);
     }
+    tick();
+  }
+  function stopBreathePhase(){
+    if(breatheTimer){ cancelAnimationFrame(breatheTimer); breatheTimer = null; }
+  }
 
-    // Pick a random animation each break
-    const modeKeys = Object.keys(MODES);
-    const mode = modeKeys[Math.floor(Math.random() * modeKeys.length)];
-    applyMode(mode);
+  // --- Countdown timer (visual only; the main process closes the window) ---
+  var raf = null, startT = 0;
+  function frame(now){
+    var elapsed = (now - startT) / 1000;
+    var remain  = Math.max(0, DURATION - elapsed);
+    var prog    = Math.min(1, elapsed / DURATION);
+    ring.style.strokeDashoffset = (C * prog).toFixed(2);
+    countEl.textContent = Math.ceil(remain - 1e-4) || 0;
+    if(elapsed >= DURATION){ countEl.textContent = "0"; ring.style.strokeDashoffset = C.toFixed(2); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function startTimer(){
+    cancelAnimationFrame(raf);
+    ring.style.strokeDashoffset = "0";
+    countEl.textContent = Math.round(DURATION);
+    startT = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
 
-    window.horizon.getSettings().then(settings => {
-      const total = settings.breakSeconds;
-      let remaining = total;
-      const el = document.getElementById('countdown');
-      el.textContent = remaining;
+  function setScene(name){
+    if(!SCENES[name]) name = 'dawn';
+    body.setAttribute('data-scene', name);
+    msgEl.textContent  = SCENES[name].message;
+    hintEl.textContent = SCENES[name].hint;
+    if(name==='breathe') startBreathePhase(); else stopBreathePhase();
+  }
 
-      // Set up the progress ring
-      const ring = document.getElementById('ringProgress');
-      const radius = ring.r.baseVal.value;
-      const circumference = 2 * Math.PI * radius;
-      ring.style.strokeDasharray = circumference;
-      ring.style.strokeDashoffset = '0'; // full ring
+  // Skip routes to the app (main process records it + closes the overlay).
+  document.getElementById('skip').addEventListener('click', function(){
+    window.horizon.skipBreak();
+  });
 
-      // Animate the ring emptying over the whole break, smoothly
-      requestAnimationFrame(() => {
-        ring.style.transition = `stroke-dashoffset ${total}s linear`;
-        ring.style.strokeDashoffset = circumference; // empties to nothing
-      });
+  // Pick a random scene, then start the countdown using the saved break length.
+  var keys = Object.keys(SCENES);
+  setScene(keys[Math.floor(Math.random()*keys.length)]);
 
-      const timer = setInterval(() => {
-        remaining--;
-        if (remaining <= 0) {
-          clearInterval(timer);
-          el.textContent = '0';
-          return;
-        }
-        el.textContent = remaining;
-      }, 1000);
-    });
-  </script>
+  window.horizon.getSettings().then(function(s){
+    DURATION = (s && s.breakSeconds) ? s.breakSeconds : 20;
+    startTimer();
+  });
+})();
+</script>
 </body>
 </html>
