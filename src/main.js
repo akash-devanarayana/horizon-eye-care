@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, screen, ipcMain, shell, dialog } = requi
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const core = require('./core');
 
 const REPO = 'akash-devanarayana/horizon-eye-care';
 const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
@@ -24,7 +25,7 @@ let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14, autoStart: false, theme: 'daylight' };
+const DEFAULTS = core.DEFAULTS;
 
 function applyAutoStart(enabled) {
   // Writes/removes the Windows "Run at login" registry entry for the packaged app.
@@ -53,9 +54,7 @@ try {
 
 function isFullscreenAppRunning() {
   if (!queryNotificationState) return false;
-  const state = queryNotificationState();
-  // 2=BUSY, 3=D3D fullscreen, 4=presentation mode, 7=fullscreen Store app
-  return state === 2 || state === 3 || state === 4 || state === 7;
+  return core.isFullscreenState(queryNotificationState());
 }
 
 function readJson(file) {
@@ -65,9 +64,9 @@ function readJson(file) {
 
 function loadSettings() {
   try {
-    return { ...DEFAULTS, ...readJson(SETTINGS_PATH) };
+    return core.mergeSettings(readJson(SETTINGS_PATH));
   } catch {
-    return { ...DEFAULTS };
+    return core.mergeSettings();
   }
 }
 
@@ -89,16 +88,8 @@ function saveStats(stats) {
   fs.writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2));
 }
 
-function dateKey(d) {
-  // Local YYYY-MM-DD (avoids the UTC shift from toISOString in non-UTC zones)
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 function todayKey() {
-  return dateKey(new Date());
+  return core.dateKey(new Date());
 }
 
 function recordBreak(type) {
@@ -116,59 +107,15 @@ function recordBreak(type) {
 }
 
 function getStreak() {
-  const stats = loadStats();
-  const dates = Object.keys(stats.days).filter(d => stats.days[d].completed > 0).sort().reverse();
-  if (dates.length === 0) return 0;
-  let streak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  for (let i = 0; i < 365; i++) {
-    const check = new Date(today);
-    check.setDate(check.getDate() - i);
-    const key = dateKey(check);
-    if (stats.days[key] && stats.days[key].completed > 0) {
-      streak++;
-    } else if (i > 0) {
-      break;
-    }
-  }
-  return streak;
+  return core.getStreak(loadStats());
 }
 
 function getLongestStreak() {
-  const stats = loadStats();
-  const days = Object.keys(stats.days).filter(d => stats.days[d].completed > 0).sort();
-  if (days.length === 0) return 0;
-  let best = 1;
-  let run = 1;
-  for (let i = 1; i < days.length; i++) {
-    const prev = new Date(days[i - 1]);
-    const cur = new Date(days[i]);
-    const diffDays = Math.round((cur - prev) / 86400000);
-    run = diffDays === 1 ? run + 1 : 1;
-    if (run > best) best = run;
-  }
-  return best;
+  return core.getLongestStreak(loadStats());
 }
 
 function getLast7Days() {
-  const stats = loadStats();
-  const result = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = dateKey(d);
-    const day = stats.days[key];
-    result.push({
-      label: labels[d.getDay()],
-      completed: day ? day.completed : 0,
-      isToday: i === 0,
-    });
-  }
-  return result;
+  return core.getLast7Days(loadStats());
 }
 
 function getWorkDuration() {
@@ -204,10 +151,7 @@ function createOverlay() {
 }
 
 function formatTime(ms) {
-  const totalSec = Math.max(0, Math.ceil(ms / 1000));
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  return `${min}:${String(sec).padStart(2, '0')}`;
+  return core.formatTime(ms);
 }
 
 function updateTooltip() {
@@ -356,15 +300,7 @@ function togglePause() {
 
 // --- Update check (lightweight: query GitHub Releases, notify if newer) ---
 function compareVersions(a, b) {
-  const pa = String(a).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
-  const pb = String(b).replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const x = pa[i] || 0;
-    const y = pb[i] || 0;
-    if (x > y) return 1;
-    if (x < y) return -1;
-  }
-  return 0;
+  return core.compareVersions(a, b);
 }
 
 function fetchLatestRelease() {
