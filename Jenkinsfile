@@ -20,6 +20,12 @@ pipeline {
     disableConcurrentBuilds()
   }
 
+  environment {
+    // Unit tests don't need the Electron runtime — skip its ~100 MB
+    // post-install download to keep CI fast and reliable.
+    ELECTRON_SKIP_BINARY_DOWNLOAD = '1'
+  }
+
   stages {
     stage('Install') {
       steps {
