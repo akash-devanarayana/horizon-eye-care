@@ -1,6 +1,6 @@
 {
   "name": "horizon",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "description": "20-20-20 rule break reminder",
   "main": "src/main.js",
   "scripts": {
@@ -27,8 +27,7 @@
     "compression": "maximum",
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.png",
-      "signAndEditExecutable": false
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": true,
