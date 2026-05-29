@@ -1,6 +1,6 @@
 {
   "name": "horizon",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "20-20-20 rule break reminder",
   "main": "src/main.js",
   "scripts": {
