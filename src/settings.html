@@ -367,6 +367,21 @@
           </div>
         </div>
       </div>
+
+      <!-- F: Start with Windows -->
+      <div class="section">
+        <div class="toggle-row">
+          <div class="sec-head" style="margin-bottom:0;">
+            <span class="sec-letter">F</span>
+            <span class="sec-title">Start with Windows</span>
+            <span class="sec-desc">Launch Horizon when you sign in.</span>
+          </div>
+          <div class="toggle" id="autoStartToggle">
+            <span class="state">OFF</span>
+            <span class="switch"></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <button class="save" id="saveBtn">Save &amp; Resume &rarr;</button>
@@ -378,6 +393,7 @@
     const goalInput = document.getElementById('dailyGoal');
     const soundToggle = document.getElementById('soundToggle');
     const dndToggle = document.getElementById('dndToggle');
+    const autoStartToggle = document.getElementById('autoStartToggle');
 
     function syncChips(containerId, input) {
       const v = parseInt(input.value, 10);
@@ -403,6 +419,7 @@
 
     soundToggle.addEventListener('click', () => setToggle(soundToggle, !soundToggle.classList.contains('on')));
     dndToggle.addEventListener('click', () => setToggle(dndToggle, !dndToggle.classList.contains('on')));
+    autoStartToggle.addEventListener('click', () => setToggle(autoStartToggle, !autoStartToggle.classList.contains('on')));
 
     wireChips('workChips', workInput);
     wireChips('breakChips', breakInput);
@@ -414,6 +431,7 @@
       goalInput.value = settings.dailyGoal || 14;
       setToggle(soundToggle, settings.soundEnabled !== false);
       setToggle(dndToggle, settings.dndEnabled !== false);
+      setToggle(autoStartToggle, settings.autoStart === true);
       syncChips('workChips', workInput);
       syncChips('breakChips', breakInput);
       syncChips('goalChips', goalInput);
@@ -425,7 +443,8 @@
       const dailyGoal = parseInt(goalInput.value, 10) || 14;
       const soundEnabled = soundToggle.classList.contains('on');
       const dndEnabled = dndToggle.classList.contains('on');
-      window.horizon.saveSettings({ workMinutes, breakSeconds, dailyGoal, soundEnabled, dndEnabled });
+      const autoStart = autoStartToggle.classList.contains('on');
+      window.horizon.saveSettings({ workMinutes, breakSeconds, dailyGoal, soundEnabled, dndEnabled, autoStart });
     });
 
     document.getElementById('closeBtn').addEventListener('click', () => {

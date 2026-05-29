@@ -24,7 +24,17 @@ let workStartedAt = null;
 let onBreak = false;
 
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
-const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14 };
+const DEFAULTS = { workMinutes: 20, breakSeconds: 20, soundEnabled: true, dndEnabled: true, dailyGoal: 14, autoStart: false };
+
+function applyAutoStart(enabled) {
+  // Writes/removes the Windows "Run at login" registry entry for the packaged app.
+  // No-op in dev (points at electron.exe), but harmless.
+  try {
+    app.setLoginItemSettings({ openAtLogin: !!enabled });
+  } catch {
+    // ignore (e.g. unsupported platform)
+  }
+}
 
 // --- Do Not Disturb: detect fullscreen apps via the Windows notification-state API ---
 let queryNotificationState = null;
@@ -513,7 +523,7 @@ function openSettings() {
   }
   settingsWin = new BrowserWindow({
     width: 560,
-    height: 880,
+    height: 980,
     resizable: false,
     frame: false,
     transparent: true,
@@ -534,6 +544,7 @@ ipcMain.handle('get-settings', () => loadSettings());
 
 ipcMain.on('save-settings', (_e, settings) => {
   saveSettings(settings);
+  applyAutoStart(settings.autoStart);
   if (settingsWin) settingsWin.close();
   if (!paused && !onBreak) {
     clearTimeout(workTimer);
@@ -600,6 +611,8 @@ ipcMain.on('update-dismiss', () => {
 app.whenReady().then(() => {
   // Required for Windows toast notifications to attribute correctly.
   app.setAppUserModelId('com.horizon.eyecare');
+  // Keep the OS login-item in sync with the saved preference.
+  applyAutoStart(loadSettings().autoStart);
   createTray();
   startWorkTimer();
   startTooltipUpdates();
